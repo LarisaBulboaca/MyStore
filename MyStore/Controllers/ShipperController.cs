@@ -1,7 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using MyStore.Data;
 using MyStore.Domain;
+using MyStore.Helpers;
+using MyStore.Models;
+using MyStore.Services;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -11,57 +15,99 @@ namespace MyStore.Controllers
     [ApiController]
     public class ShipperController : ControllerBase
     {
-        private readonly StoreContext context;
+        
+        private readonly IShipperService shipperService;
 
-        public ShipperController (StoreContext context)
+        public ShipperController(IShipperService shipperService)
         {
-            this.context = context;
+            this.shipperService = shipperService;
         }
+
         // GET: api/<ShipperController>
         [HttpGet]
-        public IEnumerable<Shipper> Get()
+        public IEnumerable<ShipperModel> Get()
         {
-            var allShippers = context.Shippers.ToList();
-            return allShippers;
-       
+            var allShippers = shipperService.GetShippers();
+            
+            var modelsToReturn = new List<ShipperModel>();
+            foreach (var shipper in allShippers)
+            {
+                modelsToReturn.Add(shipper.ToShipperModel());
+            }
+
+            return modelsToReturn;
         }
 
         // GET api/<ShipperController>/5
         [HttpGet("{id}")]
-        public Shipper? GetById(int id)
+        public ActionResult<Shipper> GetById(int id)
         {
-            var shipper = context.Shippers.Find(id);
-            return shipper; 
+            var shipperFromDb = shipperService.GetShipper(id);
+
+            if (shipperFromDb == null) 
+            {
+                return NotFound();
+            }
+
+            var model = new ShipperModel();
+            model =  shipperFromDb.ToShipperModel();
+
+            return Ok(model);
         }
         // PUT api/<ShipperController>/5
 
         [HttpPut("{id}")]
-        public Shipper Update(int id, Shipper shipper)
+        public ActionResult<ShipperModel> Update(int id, ShipperModel model)
         {
-            var existingShipper = context.Shippers.Find(id);
-            if (existingShipper != null)
+            var existingShipper = shipperService.GetShipper(id);
+            if (existingShipper == null)
             {
-                TryUpdateModelAsync(existingShipper);
-                context.Shippers.Update(shipper);
-                context.SaveChanges();
+                return NotFound();
             }
-            return shipper;
+
+            TryUpdateModelAsync(existingShipper);
+
+            var shipperToUpdate = new Shipper();
+            shipperToUpdate = model.ToShipper();
+            shipperService.Update(shipperToUpdate);
+
+            return Ok(shipperToUpdate.ToShipperModel());
         }
 
         // POST api/<ShipperController>
         [HttpPost]
-        public Shipper Create(Shipper shipperToAdd)
+        public IActionResult Create(ShipperModel model)
         {
-            context.Add(shipperToAdd);
-            context.SaveChanges();
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
-            return shipperToAdd;
+            var shipperToSave = new Shipper();
+            shipperToSave = model.ToShipper();
+           
+
+            shipperService.InsertNew(shipperToSave);
+
+            model.Shipperid = shipperToSave.Shipperid;
+
+            return CreatedAtAction(nameof(GetById), new { id = shipperToSave.Shipperid }, model);
+            
         }
 
         // DELETE api/<ShipperController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public IActionResult Delete(int id)
         {
+            var shipper = shipperService.GetShipper(id);
+            if (shipper == null)
+            {
+                return NotFound(shipper);
+            }
+            
+            shipperService.Remove(shipper);
+
+            return NoContent();
         }
     }
 }

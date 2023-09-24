@@ -1,7 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using MyStore.Data;
 using MyStore.Domain;
+using MyStore.Helpers;
+using MyStore.Models;
+using MyStore.Services;
+using System.Globalization;
 
 namespace MyStore.Controllers
 {
@@ -9,63 +14,84 @@ namespace MyStore.Controllers
     [ApiController]
     public class CategoriesController : ControllerBase
     {
-        private readonly StoreContext context;
+        
+        private readonly ICategoryService categoryService;
 
-        public CategoriesController(StoreContext context)
+        public CategoriesController(ICategoryService categoryService)
         {
-            this.context = context;
+          this.categoryService = categoryService;
         }
 
+
         [HttpGet]
-        public IEnumerable<Category> Get() 
-        { 
-            var allCategories = context.Categories.ToList();
-            return allCategories;
+        public IEnumerable<CategoryModel> Get(string? text, int pag = 1)
+        {
+            //implementam paginarea unor rezultate
+            //adaugam un filtru de cautare in description dupa un nr de caractere
+            var pageSize = 2;
+            //le luam pe toate
+            var allCategories = categoryService.GetCategories(pag, text);
+
+            //var currentPageItems = allCategories.Skip(pageSize * (pag - 1)).Take(pageSize).ToList();
+
+            var modelsToReturn = new List<CategoryModel>();
+            foreach (var category in allCategories)
+            {
+                modelsToReturn.Add(category.ToCategoryModels());
+            }
+
+            return modelsToReturn;
         }
 
         [HttpGet("{id}")]
-        public ActionResult<Category> GetById(int id)
+        //[HttpGet("mycoolCategory/{id:alpha}")]
+        public ActionResult<CategoryModel> GetById(int id)
         {
-            var category = context.Categories.Find(id);
+            var category = categoryService.GetCategory(id);
             if (category == null)
             {
                 return NotFound();
             }
-            return Ok(category);
+            var model = new CategoryModel();
+            model = category.ToCategoryModels();
+            
+            return Ok(model);
         }
 
         [HttpPut("{id}")]
-        public ActionResult<Category> Update(int id, Category category)
+        public ActionResult<CategoryModel> Update(int id, CategoryModel model)
         {
             //verificam in db daca avem ceva cu id-ul respectiv
             //updatam daca gasim
             //returnam 404 daca nu gasim
 
-            var existingCategory = context.Categories.Find(id);
+            var existingCategory = categoryService.GetCategory(id);
             if (existingCategory == null)
             {
                 return NotFound();
             }
 
             TryUpdateModelAsync(existingCategory);
-            context.Categories.Update(category);
-            context.SaveChanges();
-            
-            return Ok(category);
+
+            var categoryToUpdate = new Category();
+            categoryToUpdate = model.ToCategory();
+            categoryService.Update(categoryToUpdate);
+                        
+            return Ok(categoryToUpdate.ToCategoryModels);
         }
 
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
-            var category = context.Categories.Find(id);
+            var category = categoryService.GetCategory(id);
 
             if (category == null)
             {
                 return NotFound(category);
             }
               
-            context.Categories.Remove(category);
-            context.SaveChanges();
+            categoryService.Remove(category);
+            //context.SaveChanges();
             //exista?
             //stergem
             //returnam NotFound
@@ -73,21 +99,30 @@ namespace MyStore.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create(Category categoryToAdd)
+        public IActionResult Create(CategoryModel model)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest();
+                return BadRequest(ModelState);
             }
 
-            // TODO: business rules
+            // business rules
+            if (categoryService.IsDuplicate(model.Categoryname)) 
+            {
+                ModelState.AddModelError("Categoryname", $"You can't have duplicate items with the value {model.Categoryname} on Categoryname");
+                return Conflict(ModelState);
+            }
 
-            var addedEntity = context.Add(categoryToAdd);
-            context.SaveChanges();
+            var categoryToSave = new Category();
+            categoryToSave = model.ToCategory();
 
+            categoryService.InsertNew(categoryToSave);
+            //context.SaveChanges();
+
+            model.Categoryid = categoryToSave.Categoryid;
             //return Ok(categoryToAdd);
 
-            return CreatedAtAction(nameof(GetById), new { id = categoryToAdd.Categoryid }, categoryToAdd);
+            return CreatedAtAction(nameof(GetById), new { id = categoryToSave.Categoryid }, model);
         }
     }
 }
