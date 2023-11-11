@@ -7,6 +7,8 @@ using MyStore.Services;
 
 namespace MyStore.Controllers
 {
+    [Route("api/[controller]")]
+    [ApiController]
     public class OrderController : Controller
     {
         private readonly IOrderService orderService;

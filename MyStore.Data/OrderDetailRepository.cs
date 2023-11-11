@@ -16,9 +16,9 @@ namespace MyStore.Data
             this.storeContext = storeContext;
         }
 
-        public OrderDetail? GetOrderDetailByID(int id)
+        public OrderDetail? GetOrderDetailByID(int orderId, int productId)
         {
-            return storeContext.OrderDetails.Find(id);
+            return storeContext.OrderDetails.Find(orderId, productId);
         }
 
         public OrderDetail Add(OrderDetail orderDetail)

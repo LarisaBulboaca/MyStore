@@ -7,7 +7,7 @@ namespace MyStore.Data
         OrderDetail Add(OrderDetail orderDetail);
         int Delete(OrderDetail orderDetail);
         IEnumerable<OrderDetail> GetAll();
-        OrderDetail? GetOrderDetailByID(int id);
+        OrderDetail? GetOrderDetailByID(int orderId, int productId);
         OrderDetail Update(OrderDetail orderDetail);
     }
 }

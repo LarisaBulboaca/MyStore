@@ -7,6 +7,8 @@ using MyStore.Services;
 
 namespace MyStore.Controllers
 {
+    [Route("api/[controller]")]
+    [ApiController]
     public class OrderDetailController : Controller
     {
 
@@ -33,10 +35,10 @@ namespace MyStore.Controllers
         }
 
         // GET api/<OrderDetailController>/5
-        [HttpGet("{id}")]
-        public ActionResult<OrderDetail> GetById(int id)
+        [HttpGet("{orderId}/{productId}")]
+        public ActionResult<OrderDetail> GetById(int orderId, int productId)
         {
-            var orderDetailFromDb = orderDetailService.GetOrderDetail(id);
+            var orderDetailFromDb = orderDetailService.GetOrderDetail(orderId, productId);
 
             if (orderDetailFromDb == null)
             {
@@ -51,9 +53,9 @@ namespace MyStore.Controllers
         // PUT api/<OrderDetailController>/5
 
         [HttpPut("{id}")]
-        public ActionResult<OrderDetailModel> Update(int id, OrderDetailModel model)
+        public ActionResult<OrderDetailModel> Update(int orderId, int productId, OrderDetailModel model)
         {
-            var existingOrderDetail = orderDetailService.GetOrderDetail(id);
+            var existingOrderDetail = orderDetailService.GetOrderDetail(orderId, productId);
             if (existingOrderDetail == null)
             {
                 return NotFound();
@@ -91,9 +93,9 @@ namespace MyStore.Controllers
 
         // DELETE api/<OrderDetailController>/5
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public IActionResult Delete(int orderId, int productId)
         {
-            var orderDetail = orderDetailService.GetOrderDetail(id);
+            var orderDetail = orderDetailService.GetOrderDetail(orderId, productId);
             if (orderDetail == null)
             {
                 return NotFound(orderDetail);

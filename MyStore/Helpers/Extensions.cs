@@ -141,9 +141,9 @@ namespace MyStore.Helpers
             model.Country = domainObject.Country;
             model.Phone = domainObject.Phone;
             model.Mgrid = domainObject.Mgrid;
-            model.InverseMgr = domainObject.InverseMgr;
+            //model.InverseMgr = domainObject.InverseMgr;
             model.Mgr = domainObject.Mgr;
-            model.Orders = domainObject.Orders;
+            //model.Orders = domainObject.Orders;
 
             return model;
         }

@@ -7,6 +7,8 @@ using MyStore.Services;
 
 namespace MyStore.Controllers
 {
+    [Route("api/[controller]")]
+    [ApiController]
     public class ScoreController : Controller
     {
         private readonly IScoreService scoreService;

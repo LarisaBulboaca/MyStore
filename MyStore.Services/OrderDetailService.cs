@@ -17,9 +17,9 @@ namespace MyStore.Services
             this.orderDetailRepository = orderDetailRepository;
         }
 
-        public OrderDetail? GetOrderDetail(int id)
+        public OrderDetail? GetOrderDetail(int orderId, int productId)
         {
-            var existingOrderDetail = orderDetailRepository.GetOrderDetailByID(id);
+            var existingOrderDetail = orderDetailRepository.GetOrderDetailByID(orderId, productId);
             return existingOrderDetail;
         }
 
